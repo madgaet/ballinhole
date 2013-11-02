@@ -1,7 +1,7 @@
 window.onload = init;
 
 //variables for timer
-var status; // 1 is STARTED and 2 is STOPPED
+var status = 2; // 1 is STARTED and 2 is STOPPED
 var time;
 
 //variables for moving ball
@@ -15,22 +15,10 @@ var lastMouse, lastOrientation, lastTouch;
                             
 // Initialisation on opening of the window
 function init() {
-
-	//code to lock portrait view
-	window.onorientationchange = reorient;
-	window.setTimeout(reorient, 0);
-
-	//timer.js code
-	document.getElementById("start").onclick = start;
-	document.getElementById("stop").onclick = stop;
-	document.getElementById("resume").onclick = resume;
-	status = 2;
-	time = 0;
-	setInterval(timer, 1000);
 	
 	//Moving ball code
 	lastOrientation = {};
-	window.addEventListener('resize', doLayout, false);
+	
 	document.body.addEventListener('mousemove', onMouseMove, false);
 	document.body.addEventListener('mousedown', onMouseDown, false);
 	document.body.addEventListener('mouseup', onMouseUp, false);
@@ -38,26 +26,29 @@ function init() {
 	document.body.addEventListener('touchstart', onTouchDown, false);
 	document.body.addEventListener('touchend', onTouchUp, false);
 	window.addEventListener('deviceorientation', deviceOrientationTest, false);
+	window.addEventListener('resize', doLayout, false);
+
 	lastMouse = {x:0, y:0};
 	lastTouch = {x:0, y:0};
 	mouseDownInsideball = false;
 	touchDownInsideball = false;
 	doLayout(document);
+	
+	//timer.js code
+	document.getElementById("start").onclick = start;
+	document.getElementById("stop").onclick = stop;
+	document.getElementById("resume").onclick = resume;
+	status = 2;
+	time = 0;
+	setInterval(timer, 1000);
 }
-
-//function to lock portrait view
- function reorient(e) {
-    var portrait = (window.orientation % 180 == 0);
-    $("body > div").css("-webkit-transform", !portrait ? "rotate(-90deg)" : "");
- }
-
 
 //function for timer
 function start() {
 	if (status == 2) {
 		time = 0;
-		status = 1;
 		doLayout(document);
+		status = 1;
 		var textZone = document.getElementById("winMessage");
 		textZone.style = "";
 		textZone.innerHTML = "";
@@ -71,7 +62,7 @@ function stop() {
 }
 
 function resume() {
-	if (status == 2) {
+	if (status == 2 && !isBallInHole()) {
 		status = 1;
 	}
 }
@@ -90,10 +81,10 @@ function getTime() {
 		timeElapsed = "00:" + time + "";
 	}
 	else if (time >= 60 && time < 3600) {
-		timeElapsed = time/60 + ":" + time%60; 
+		timeElapsed = Math.floor(time/60) + ":" + time%60; 
 	} else if (time >= 3600){
-		var hours = time/3600;
-		var minutes = (time-hours*3600)/60;
+		var hours = Math.floor(time/3600);
+		var minutes = Math.floor((time-hours*3600)/60);
 		var seconds = (time-hours*3600-minutes*60);
 		timeElapsed = hours + ":" + minutes + ":" + seconds;
 	}
@@ -118,14 +109,19 @@ function doLayout(event) {
 	surface.height = winH;
 	var radius = Math.sqrt(winW*winW+winH*winH)/30;
 	var radiusHole = Math.sqrt(winW*winW+winH*winH)/20;
-	ball = {	radius:radius,
-				x:Math.round(winW/2),
-				y:Math.round(winH/2),
-				color:'rgba(255, 255, 255, 255)'};
-	hole = {	radius:radiusHole,
-				x:Math.round(Math.random()*(winW-radiusHole)),
-				y:Math.round(Math.random()*(winH-radiusHole)), 
-				color: 'rgba(35, 190, 35, 255)'};
+	if (status==1 && !isBallInHole()) {
+		ball.radius = radius;
+		hole.radius = radiusHole;
+	} else {
+		ball = {	radius:radius,
+					x:Math.round(winW/2),
+					y:Math.round(winH/2),
+					color:'rgba(255, 255, 255, 255)'};
+		hole = {	radius:radiusHole,
+					x:Math.round(Math.random()*(winW-radiusHole)),
+					y:Math.round(Math.random()*(winH-radiusHole)), 
+					color: 'rgba(35, 190, 35, 255)'};
+	}
 	renderBall();
 }
 	
@@ -194,16 +190,23 @@ function moveBall(xDelta, yDelta) {
 	if(status==1) {
 		ball.x += xDelta;
 		ball.y += yDelta;
-		if (ball.x - ball.radius > hole.x - hole.radius
-				&& ball.x + ball.radius < hole.x + hole.radius
-				&& ball.y - ball.radius > hole.y  - hole.radius
-				&& ball.y + ball.radius < hole.y  + hole.radius) {
+		if (isBallInHole()) {
 					renderBall();
 					renderWinMessage();
 					stop();
 		}
 		renderBall();
 	}
+}
+
+function isBallInHole() {
+	if (ball.x - ball.radius > hole.x - hole.radius
+			&& ball.x + ball.radius < hole.x + hole.radius
+			&& ball.y - ball.radius > hole.y  - hole.radius
+			&& ball.y + ball.radius < hole.y  + hole.radius) {
+				return true;
+	}
+	return false;
 }
 
 function onMouseMove(event) {
@@ -285,4 +288,5 @@ function onTouchUp(event) {
 function onDeviceOrientationChange(event) {
 	lastOrientation.gamma = event.gamma;
 	lastOrientation.beta = event.beta;
+	return false;
 }
