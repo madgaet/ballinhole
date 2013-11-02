@@ -1,0 +1,38 @@
+/*css to lock portrait view*/
+body > div { 
+	-webkit-transition: all 1s ease-in-out;
+}
+
+/*css for moving ball*/
+body {
+	orient: "portrait";
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    background-color: #00FF00;
+}
+
+#surface {
+	position: absolute;
+	top: 7%;
+	width: 100%;
+	height: 85%;
+}
+
+#winMessage {
+	position: absolute;
+	top: 70%;
+	left: 10%;
+	width: 80%;
+	height: 15%;
+}
+
+#fullscreenButton {
+    position: absolute;
+    right: 10px;
+    top: 5%;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    font-size: 22px;
+    color: #ffffff;
+}
